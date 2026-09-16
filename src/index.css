@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Custom CSS Scrollbar and PDF/Print Friendly styles */
+@keyframes activeCardGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.35), 0 10px 25px -5px rgba(99, 102, 241, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(99, 102, 241, 0.6), 0 20px 30px -5px rgba(99, 102, 241, 0.35);
+  }
+}
+
+.animate-active-card-glow {
+  animation: activeCardGlow 2s infinite ease-in-out;
+}
+
+@media print {
+  /* Hide all elements with .no-print */
+  .no-print, 
+  header, 
+  footer, 
+  nav, 
+  button, 
+  #tabs-navigation {
+    display: none !important;
+  }
+  
+  /* Reset page background and styling for high-quality printing */
+  html, body {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    font-size: 12pt !important;
+  }
+
+  /* Force print container to be visible and occupy full page */
+  #questions-printable-container {
+    display: block !important;
+    visibility: visible !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Custom Page Margins */
+  @page {
+    size: A4;
+    margin: 20mm 15mm 20mm 15mm; /* Standard academic exam margins */
+  }
+
+  /* Prevent question items from breaking awkwardly in half across pages */
+  .break-inside-avoid, 
+  .page-break-inside-avoid {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Standard headings page-break rules */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  /* Better ink conservation & readable monochrome prints */
+  * {
+    color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+}

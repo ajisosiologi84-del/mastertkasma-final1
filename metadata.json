@@ -1,0 +1,8 @@
+{
+  "name": "Master TKA SMA",
+  "description": "Master TKA SMA: Sistem Manajemen Kisi-Kisi & Soal TKA SMA berbasis AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
