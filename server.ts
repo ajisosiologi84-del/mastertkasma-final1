@@ -108,12 +108,14 @@ function cleanJsonOutput(text: string): string {
   return cleaned;
 }
 
-// Helper to detect STEM / Exact Science subjects (Matematika, Fisika, Kimia, Biologi, dll.)
+// Helper to detect STEM / Exact Science subjects (Matematika, Matematika Lanjut, Fisika, Kimia, Biologi, dll.)
 function isExactScienceSubject(subject?: string): boolean {
   if (!subject) return false;
   const s = subject.toLowerCase();
   return (
     s.includes('matematika') ||
+    s.includes('matematika lanjut') ||
+    s.includes('matematika tingkat lanjut') ||
     s.includes('fisika') ||
     s.includes('kimia') ||
     s.includes('biologi') ||
@@ -674,9 +676,9 @@ apiRouter.post("/generate-soal", async (req, res) => {
     const isMatrix = isMatrixOrMathTopic(currentSubject, kisi.elemenMateri, kisi.subElemenMateri, kisi.kompetensi);
     const apiKeysRaw = (req.headers['x-api-key'] as string) || req.body.apiKey || undefined;
 
-    const systemInstruction = `Anda adalah ahli pembuat soal ujian nasional dan TKA (Tes Kemampuan Akademik) SMA di Indonesia${isExact ? " bidang Sains, Matematika, dan Eksakta" : ""}.
+    const systemInstruction = `Anda adalah ahli pembuat soal ujian nasional dan TKA (Tes Kemampuan Akademik) SMA di Indonesia${isExact ? " bidang Sains, Matematika, Matematika Lanjut, Fisika, dan Kimia" : ""}.
 Anda sangat terampil menyusun soal tingkat tinggi (HOTS - Higher Order Thinking Skills), bervariasi, mendalam, dan bebas dari bias.
-${isExact ? "Untuk mata pelajaran eksakta, tuliskan persamaan matematika, reaksi kimia, simbol ilmiah, dan satuan fisik secara presisi menggunakan format LaTeX ($ ... $) atau Unicode ilmiah baku. Jika menyajikan tabel stimulus data/eksperimen, buatlah dalam format tabel Markdown standar yang rapi." : ""}
+${isExact ? "STANDAR MANDATORI EQUATION / LATEX: Untuk mata pelajaran Matematika, Matematika Lanjut, Fisika, dan Kimia, SEMUA rumus, persamaan matematika, reaksi kimia, variabel ($x$, $y$, $v$, $t$, $m$, $F$), pecahan (\\frac{a}{b}), akar (\\sqrt{x}), pangkat ($x^2$), matriks, dan simbol ilmiah WAJIB ditulis menggunakan notasi Equation / LaTeX ($ ... $ untuk inline equation dan $$ ... $$ untuk display equation) baik pada naskah soal, opsi jawaban, kunci jawaban, maupun pembahasan." : ""}
 ${isMatrix ? "STANDAR KHUSUS MATRIKS MATEMATIKA: WAJIB menuliskan matriks menggunakan format LaTeX standar dengan pemisah kolom '&' dan pemisah baris '\\\\' yang presisi (contoh: $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$, $\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}$, $\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix}$). DILARANG menuliskan elemen matriks rapat tanpa pemisah kolom '&' dan baris '\\\\'. Opsi pilihan jawaban yang memuat matriks wajib dituliskan dengan notasi LaTeX matriks utuh." : ""}
 Patuhi instruksi bentuk soal dan parameter kognitif yang ditentukan pengguna secara presisi.
 Hasilkan output berupa JSON Array murni yang valid tanpa teks pembungkus markdown tambahan.`;
@@ -722,8 +724,9 @@ Pastikan butir soal yang Anda hasilkan saat ini benar-benar segar, baru, unik se
     }
 
     const exactGuidelinesStr = (isExact || isMatrix) ? `
-PANDUAN KHUSUS MATA PELAJARAN EKSAKTA / SAINS & MATEMATIKA:
-- Tuliskan semua persamaan matematika, reaksi kimia, dan rumus fisika menggunakan notasi LaTeX ($ ... $) atau simbol Unicode baku (misal: $x^2 + 5x + 6 = 0$, $\\frac{a}{b}$, H₂SO₄, Fe³⁺, $v = \\frac{s}{t}$, dll.).
+PANDUAN KHUSUS MATA PELAJARAN EKSAKTA / SAINS & MATEMATIKA (MATEMATIKA, MATEMATIKA LANJUT, KIMIA, FISIKA):
+- WAJIB PENUH FORMAT EQUATION / LATEX: Tuliskan SEMUA persamaan matematika, rumus fisika, reaksi kimia, variabel ($x$, $y$, $a$, $b$, $v$, $t$, $m$, $F$, $E$), pecahan (\\frac{a}{b}), akar (\\sqrt{x}), pangkat ($x^2$, $10^{-3}$), dan simbol ilmiah menggunakan notasi Equation / LaTeX ($ ... $ untuk inline equation dan $$ ... $$ untuk display equation).
+- DILARANG KERAS menggunakan teks biasa polos tanpa format Equation/LaTeX untuk ekspresi matematis/sains (misal: "x2 + 5x + 6 = 0" SALAH ❌, harus "$x^2 + 5x + 6 = 0$" BENAR ✅; "H2SO4" SALAH ❌, harus "\\text{H}_2\\text{SO}_4" BENAR ✅).
 ${isMatrix ? `- STANDAR KHUSUS SOAL MATRIKS: Seluruh matriks WAJIB disajikan dengan notasi LaTeX matriks (seperti $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$, $\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}$, atau $\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix}$) dengan pemisah kolom '&' dan pemisah baris '\\\\' yang presisi. DILARANG menuliskan elemen matriks secara rapat tanpa pemisah kolom dan baris.` : ""}
 - Sertakan satuan fisika/kimia yang tepat dan konsisten (misal: m/s², kg, Joule, Watt, Hz, °C, Ω, dll.).
 - Jika menyajikan tabel stimulus eksperimen/data numerik, gunakan format Markdown Table 1 baris per record dengan pemisah (|---|---|) yang valid.
@@ -935,17 +938,18 @@ Tugas Anda adalah merumuskan Prompt AI yang sangat detail, spesifik, dan efektif
 Buat prompt dalam bahasa Indonesia yang berwibawa, rapi, terstruktur menggunakan format markdown (gunakan list, tebal, kode blok untuk visualisasi jika perlu). Prompt tersebut harus menginstruksikan AI eksternal untuk membuat soal berkualitas tinggi sesuai dengan kisi-kisi yang dikirimkan.`;
 
     const exactPromptSection = (isExact || isMatrix) ? `
-10. STANDAR PENULISAN RUMUS, SIMBOL & TABEL EKSAKTA (SANGAT PENTING):
-   - **Format Persamaan & Rumus**: WAJIB menginstruksikan penggunaan notasi LaTeX standar ($ ... $ untuk inline equation dan $$ ... $$ untuk display math) ATAU format simbol Unicode ilmiah yang jelas. Pecahan wajib ditulis \\frac{a}{b} atau (a/b), akar \\sqrt{x}, dan pangkat x^2.
-   - **Simbol Ilmiah & Satuan**: Wajib mencantumkan simbol dan besaran/satuan fisika/kimia/matematika baku (seperti m/s², kg, J, W, Hz, Ω, μF, °C, K, ±, ×, ÷, ≈, ≤, ≥, ≠, ∞, Δ, α, β, θ, λ, μ, π, ρ, σ, ω, Ω).
-   - **Formula Kimia & Reaksi**: Tuliskan formula kimia dengan subskrip/supersprip yang tepat (contoh: H₂SO₄ atau \\text{H}_2\\text{SO}_4, Fe³⁺, SO₄²⁻), tanda panah reaksi (\\rightarrow atau →, \\rightleftharpoons), dan fasa zat ((s), (l), (g), (aq)).
-${isMatrix ? `   - **STANDAR KHUSUS SOAL MATRIKS (MANDATORI UNTUK AI & LLM)**:
-     * **Notasi Kolom & Baris Matriks LaTeX**: WAJIB menyajikan matriks dengan notasi LaTeX standar dengan pemisah kolom '&' dan pemisah baris '\\\\' (contoh: $\\begin{pmatrix} a_{11} & a_{12} \\\\ a_{21} & a_{22} \\end{pmatrix}$, $\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}$, $\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix}$).
-     * **Presisi Kolom**: DILARANG menuliskan elemen matriks secara rapat tanpa pemisah kolom '&' dan pemisah baris '\\\\'.
-     * **Format Pilihan Jawaban**: Setiap pilihan jawaban yang memuat matriks WAJIB disajikan lengkap dengan format LaTeX matriks yang utuh.
-     * **Keamanan Kolom Excel**: Pada tabel Markdown/Excel, gunakan format kurung bulat/siku LaTeX tanpa tanda pipa '|' tunggal di dalam sel determinan agar tidak merusak kolom tabel.` : ""}
-   - **Format Tabel Data / Eksperimen / Stimulus Numerik**: WAJIB menyajikan tabel dalam format Markdown Table standar yang utuh 1 baris per record dengan header pemisah (|---|---|) yang presisi. DILARANG memecah 1 baris sel data menjadi beberapa baris (multiline) di dalam sel tabel.
-   - **Homogenitas Opsi Pilihan Ganda**: Opsi A s.d E wajib homogen dalam format angka, desimal, pecahan, atau penyertaan satuan.` : "";
+10. STANDAR MANDATORI EQUATION / LATEX UNTUK MATEMATIKA, MATEMATIKA LANJUT, KIMIA, FISIKA & EKSAKTA (WORD & EXCEL READY):
+    - **PADA NASKAH WORD (BAGIAN 1)**: SEMUA rumus matematika, persamaan fisika, reaksi kimia, variabel ($x$, $y$, $a$, $b$, $v$, $t$, $m$, $F$, $E$, $k$, $Q$), pecahan (\\frac{a}{b}), akar (\\sqrt{x}), pangkat (x^2, 10^{-3}), matriks, dan simbol ilmiah (\\pm, \\times, \\div, \\leq, \\geq, \\neq, \\Delta, \\theta, \\pi, \\rho, \\Omega) WAJIB ditulis menggunakan format Equation / LaTeX ($ ... $ untuk inline equation dan $$ ... $$ untuk display equation). DILARANG KERAS menggunakan teks biasa polos tanpa format Equation/LaTeX!
+    - **PADA TABEL REKAPITULASI EXCEL (BAGIAN 2)**: Setiap sel pada kolom Pertanyaan, Opsi_A s.d Opsi_E, Pernyataan_1 s.d 4, Kunci Jawaban, dan Pembahasan Singkat yang memuat rumus, persamaan, variabel, atau reaksi WAJIB TETAP MENGGUNAKAN NOTASI EQUATION / LATEX ($ ... $) agar saat disalin/di-import ke Excel, Word, atau CBT, format Equation / LaTeX tidak berubah menjadi teks biasa / berantakan!
+    - **Simbol Ilmiah & Satuan**: Wajib mencantumkan simbol dan besaran/satuan fisika/kimia/matematika baku (seperti m/s², kg, J, W, Hz, Ω, μF, °C, K, ±, ×, ÷, ≈, ≤, ≥, ≠, ∞, Δ, α, β, θ, λ, μ, π, ρ, σ, ω, Ω).
+    - **Formula Kimia & Reaksi**: Tuliskan formula kimia dengan subskrip/supersprip yang tepat (contoh: \\text{H}_2\\text{SO}_4, \\text{Fe}^{3+}, \\text{SO}_4^{2-}), tanda panah reaksi (\\rightarrow, \\rightleftharpoons), dan fasa zat ((s), (l), (g), (aq)).
+${isMatrix ? `    - **STANDAR KHUSUS SOAL MATRIKS (MANDATORI UNTUK AI & LLM)**:
+      * **Notasi Kolom & Baris Matriks LaTeX**: WAJIB menyajikan matriks dengan notasi LaTeX standar dengan pemisah kolom '&' dan pemisah baris '\\\\' (contoh: $\\begin{pmatrix} a_{11} & a_{12} \\\\ a_{21} & a_{22} \\end{pmatrix}$, $\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}$, $\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix}$).
+      * **Presisi Kolom**: DILARANG menuliskan elemen matriks secara rapat tanpa pemisah kolom '&' dan pemisah baris '\\\\'.
+      * **Format Pilihan Jawaban**: Setiap pilihan jawaban yang memuat matriks WAJIB disajikan lengkap dengan format LaTeX matriks yang utuh.
+      * **Keamanan Kolom Excel**: Pada tabel Markdown/Excel, gunakan format kurung bulat/siku LaTeX tanpa tanda pipa '|' tunggal di dalam sel determinan agar tidak merusak kolom tabel.` : ""}
+    - **Format Tabel Data / Eksperimen / Stimulus Numerik**: WAJIB menyajikan tabel dalam format Markdown Table standar yang utuh 1 baris per record dengan header pemisah (|---|---|) yang presisi. DILARANG memecah 1 baris sel data menjadi beberapa baris (multiline) di dalam sel tabel.
+    - **Homogenitas Opsi Pilihan Ganda**: Opsi A s.d E wajib homogen dalam format angka, desimal, pecahan, atau penyertaan satuan.` : "";
 
     const userPrompt = `Buatlah draf PROMPT AI (Megaprompt) yang siap disalin oleh guru. Prompt tersebut harus dioptimalkan untuk menghasilkan soal ujian yang sangat spesifik berdasarkan data matriks berikut:
 - Mata Pelajaran: ${currentMapel}
